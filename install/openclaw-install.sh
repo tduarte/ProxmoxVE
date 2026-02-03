@@ -62,12 +62,73 @@ msg_info "Installing OpenClaw"
 $STD npm install -g openclaw@latest
 msg_ok "Installed OpenClaw"
 
+msg_info "Configuring AI Provider API Keys (optional)"
+OPENCLAW_ENV_FILE="/root/.openclaw/.env"
+mkdir -p /root/.openclaw
+
+read -r -s -p "${TAB3}OpenAI API Key (leave blank to skip): " OPENAI_API_KEY
+echo
+if [[ -n "$OPENAI_API_KEY" ]]; then
+  echo "OPENAI_API_KEY=${OPENAI_API_KEY}" >>"$OPENCLAW_ENV_FILE"
+fi
+
+read -r -s -p "${TAB3}Google Gemini API Key (leave blank to skip): " GEMINI_API_KEY
+echo
+if [[ -n "$GEMINI_API_KEY" ]]; then
+  echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >>"$OPENCLAW_ENV_FILE"
+fi
+
+read -r -s -p "${TAB3}Anthropic API Key (leave blank to skip): " ANTHROPIC_API_KEY
+echo
+if [[ -n "$ANTHROPIC_API_KEY" ]]; then
+  echo "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}" >>"$OPENCLAW_ENV_FILE"
+fi
+
+if [[ -f "$OPENCLAW_ENV_FILE" ]]; then
+  chmod 600 "$OPENCLAW_ENV_FILE"
+fi
+msg_ok "API key configuration completed"
+
 msg_info "Starting OpenClaw onboarding"
 if openclaw onboard --install-daemon; then
   msg_ok "OpenClaw onboarding completed"
 else
   msg_error "OpenClaw onboarding failed. Re-run: openclaw onboard --install-daemon"
   exit 1
+fi
+
+msg_info "Configuring OpenClaw Gateway for Tailscale Funnel"
+openclaw config set gateway.mode local
+openclaw config set gateway.bind loopback
+openclaw config set gateway.tailscale.mode funnel
+openclaw config set gateway.tailscale.resetOnExit false
+
+GATEWAY_AUTH_PASSWORD=""
+while [[ -z "$GATEWAY_AUTH_PASSWORD" ]]; do
+  read -r -s -p "${TAB3}Set a Gateway password (required for non-loopback access): " GATEWAY_AUTH_PASSWORD
+  echo
+  if [[ -z "$GATEWAY_AUTH_PASSWORD" ]]; then
+    msg_warn "Gateway password cannot be empty."
+    continue
+  fi
+  read -r -s -p "${TAB3}Confirm Gateway password: " GATEWAY_AUTH_PASSWORD_CONFIRM
+  echo
+  if [[ "$GATEWAY_AUTH_PASSWORD" != "$GATEWAY_AUTH_PASSWORD_CONFIRM" ]]; then
+    msg_warn "Passwords do not match. Try again."
+    GATEWAY_AUTH_PASSWORD=""
+  fi
+done
+
+openclaw config set gateway.auth.mode password
+openclaw config set gateway.auth.password "$GATEWAY_AUTH_PASSWORD"
+msg_ok "Configured Gateway defaults"
+
+if systemctl --user enable --now openclaw-gateway.service >/dev/null 2>&1; then
+  msg_ok "Enabled OpenClaw Gateway user service"
+else
+  msg_warn "Could not enable the OpenClaw Gateway user service."
+  msg_warn "If it doesn't start after reboot, run: systemctl --user enable --now openclaw-gateway.service"
+  msg_warn "You may also need: loginctl enable-linger $USER"
 fi
 
 motd_ssh
