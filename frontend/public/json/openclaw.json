@@ -1,0 +1,40 @@
+{
+  "name": "OpenClaw",
+  "slug": "openclaw",
+  "categories": [
+    20
+  ],
+  "date_created": "2026-02-03",
+  "type": "ct",
+  "updateable": true,
+  "privileged": false,
+  "interface_port": 18789,
+  "documentation": "https://openclaw.im/docs",
+  "website": "https://openclaw.im/",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/openclaw.webp",
+  "config_path": "",
+  "description": "OpenClaw is an open-source, self-hosted agentic AI platform for running and orchestrating AI tools and workflows.",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/openclaw.sh",
+      "resources": {
+        "cpu": 2,
+        "ram": 2048,
+        "hdd": 60,
+        "os": "ubuntu",
+        "version": "24.04"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": null,
+    "password": null
+  },
+  "notes": [
+    {
+      "text": "During onboarding, choose your preferred Gateway exposure. For Tailscale access, select tailnet/Serve options in the OpenClaw wizard.",
+      "type": "info"
+    }
+  ]
+}
