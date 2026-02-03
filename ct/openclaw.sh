@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
+BUILD_FUNC_URL="https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func"
+if [[ -n "${DEV_REPO:-}" ]]; then
+  DEV_BRANCH="${DEV_BRANCH:-main}"
+  BUILD_FUNC_URL="https://raw.githubusercontent.com/${DEV_REPO}/${DEV_BRANCH}/misc/build.func"
+fi
+source <(curl -fsSL "$BUILD_FUNC_URL")
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: OpenClaw Community Scripts
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
@@ -46,16 +51,6 @@ function update_script() {
 
 start
 build_container
-
-if [[ -n "${DEV_REPO:-}" ]]; then
-  DEV_BRANCH="${DEV_BRANCH:-main}"
-  msg_info "Dev mode enabled - running installer from ${DEV_REPO}/${DEV_BRANCH}"
-  lxc-attach -n "${CT_ID}" -- bash -c "
-    export FUNCTIONS_FILE_PATH=\"\$(curl -fsSL https://raw.githubusercontent.com/${DEV_REPO}/${DEV_BRANCH}/misc/install.func)\"
-    bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/${DEV_REPO}/${DEV_BRANCH}/install/openclaw-install.sh)\"
-  "
-  msg_ok "Dev installer run completed"
-fi
 
 description
 
